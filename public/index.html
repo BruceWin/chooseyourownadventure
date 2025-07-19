@@ -325,7 +325,7 @@
     async function typeStoryText(element, text, delay = 15) {
       element.textContent = "";
       for (let i = 0; i < text.length; i++) {
-        element.textContent += text.charAt(i);
+        element.textContent += text.charAt(i).toLowerCase();
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -336,7 +336,7 @@
       document.querySelectorAll(".preset-btn").forEach(btn => {
         btn.addEventListener("click", () => {
           const prompt = btn.getAttribute("data-prompt");
-          document.getElementById("custom-prompt").value = prompt;
+          document.getElementById("custom-prompt").value = prompt.toLowerCase();
         });
       });
     });
