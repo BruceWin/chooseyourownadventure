@@ -226,9 +226,11 @@
   </div>
 
   <footer>
-    <button onclick="resetStory()" class="preset-btn" style="margin-top: 1rem;">
-      Start New Story
-    </button>
+    <div id="restart-wrapper" style="display: none; text-align: center; margin-top: 2rem;">
+      <button id="restart-button" onclick="resetStory()" class="preset-btn">
+        Start a new story
+      </button>
+    </div>
   </footer>
 
   <script>
@@ -255,14 +257,13 @@
       const chatContainer = document.getElementById("chat-container");
       chatContainer.style.display = "flex";
       chatContainer.classList.add("fade-in");
-
-
       await render("start"); // Kick off story
     }
 
 
 
     async function render(nodeId = "start", choiceText = null) {
+      document.getElementById("restart-wrapper").style.display = "none";
       document.getElementById("typing-indicator").style.display = "block";
 
       const node = await fetchNode(nodeId, choiceText, document.getElementById("story").textContent);
@@ -285,6 +286,7 @@
         restartBtn.onclick = () => render("start");
         choicesDiv.appendChild(restartBtn);
       }
+      document.getElementById("restart-wrapper").style.display = "block";
     }
 
     async function fetchNode(nodeId = "start", choiceText = null, previousText = "") {
