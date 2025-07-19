@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Choose Your Own Adventure</title>
+  <title>story loop - every choice matters</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -41,8 +41,8 @@
     }
 
     header {
-      text-align: center;
-      margin-bottom: 2rem;
+      text-align: left;
+      margin-bottom: 1rem;
       padding: 1rem 0;
       border-bottom: 1px solid var(--border);
       color: var(--text-light);
@@ -50,9 +50,9 @@
 
     h1 {
       font-size: 1.8rem;
-      color: var(--text);
+      color: var(--text-light);
       /* Tailwind's gray-900 — very dark */
-      font-weight: 700;
+
     }
 
 
@@ -113,31 +113,32 @@
       transition: background-color 0.2s ease;
     }
 
+    .restart-btn {
+      padding: 0.5rem 1rem;
+      background-color: var(--surface);
+      color: var(--text-light);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
     .preset-btn:hover {
       background-color: var(--primary-hover);
     }
 
-
-
     .typing-indicator {
       display: none;
-      position: absolute;
-      top: 30%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 1rem;
+      font-size: 0.9rem;
       color: var(--text-light);
+      margin-bottom: 1rem;
       text-align: center;
-      background: white;
-      padding: 1rem 2rem;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      z-index: 999;
     }
 
     .typing-indicator.visible {
       display: block;
     }
+
 
     footer {
       margin-top: 1rem;
@@ -165,52 +166,50 @@
 
 <body>
   <header>
-    <h1>Choose Your Own Adventure</h1>
-    <p>An interactive story</p>
+    <h1 id="header-title">start your adventure</h1>
   </header>
 
   <div id="story-selector" style="margin-bottom: 2rem;">
-    <h2 style="font-size: 1.2rem;">Start Your Adventure</h2>
-    <p style="margin-bottom: 0.5rem;">Choose a theme or write your own:</p>
+    <p style="margin-bottom: 0.5rem;">choose a theme or write your own:</p>
 
     <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
       <button class="preset-btn"
         data-prompt="In the candlelit halls of Elmsford Castle, whispers of betrayal coil around the aging King Aldric. Begin the story with a masked ball where the wrong heir is revealed.">🎭
-        Shakespearian</button>
+        shakespearian</button>
 
       <button class="preset-btn"
         data-prompt="You work in a vast AI-run corporation where every action is monitored and rated. One morning, the system flags you as an 'anomaly' and tells you to leave immediately. Begin the story from this moment.">💼
-        Corporate Dystopia</button>
+        corporate dystopia</button>
 
       <button class="preset-btn"
         data-prompt="In a society without money, war, or pollution, a festival is held to honor peace. But one citizen begins to question what lies beyond the shimmering dome. Start the story at the celebration.">🌸
-        Utopian</button>
+        utopian</button>
 
       <button class="preset-btn"
         data-prompt="You step off the boat onto a sun-drenched island, surrounded by cameras and rivals. The first challenge? Choose who to share a sunset dinner with. Begin the story at the welcome ceremony.">❤️
-        Date Villa</button>
+        date villa</button>
 
       <button class="preset-btn"
         data-prompt="The sun rises over Honeybell Farm as you wake to news that your prized cow has vanished. Begin the story as you hitch your boots and set out across the fields to find it.">🚜
-        Farm Life</button>
+        farm life</button>
 
       <button class="preset-btn"
         data-prompt="You wake up in a containment pod, alarms blaring and glass cracked. You remember nothing except your name. Begin the story as the lab's lockdown fails and you step into the corridor.">🧪
-        Sci-Fi Lab Escape</button>
+        sci-fi lab escape</button>
 
       <button class="preset-btn"
         data-prompt="The stars have aligned, and your village elder gives you a blade wrapped in prophecy. Begin the story the moment you cross the boundary stone into the dark woods.">👑
-        Fantasy Quest</button>
+        fantasy quest</button>
 
       <button class="preset-btn"
         data-prompt="You're in a quiet café when someone bangs on the window, screaming. Blood smears the glass. Begin the story in the first chaotic moments of the outbreak.">🦠
-        Zombie Outbreak</button>
+        zombie outbreak</button>
     </div>
 
     <textarea id="custom-prompt" placeholder="Or write your own scene prompt..." rows="2"
       style="width: 100%; padding: 0.5rem; margin-bottom: 1rem;"></textarea>
 
-    <button onclick="startStory()" class="preset-btn">Begin Adventure</button>
+    <button onclick="startStory()" class="preset-btn">begin adventure</button>
   </div>
 
 
@@ -219,18 +218,19 @@
     <div id="chat-messages" class="chat-messages">
       <div id="story"></div>
       <div id="choices"></div>
+      <div id="restart-wrapper" style="display: none; text-align: center; margin-top: 2rem;">
+        <button id="restart-button" onclick="resetStory()" class="restart-btn">
+          start a new story
+        </button>
+      </div>
     </div>
     <div class="typing-indicator" id="typing-indicator">
-      Loading story
+      loading story
     </div>
   </div>
 
   <footer>
-    <div id="restart-wrapper" style="display: none; text-align: center; margin-top: 2rem;">
-      <button id="restart-button" onclick="resetStory()" class="preset-btn">
-        Start a new story
-      </button>
-    </div>
+
   </footer>
 
   <script>
@@ -240,6 +240,7 @@
     let initialPrompt = "";
 
     async function startStory() {
+      document.getElementById("header-title").textContent = "continue your adventure";
       const select = document.getElementById("preset-select");
       const textarea = document.getElementById("custom-prompt");
       const prompt = textarea.value.trim() || select.value;
@@ -265,17 +266,15 @@
     async function render(nodeId = "start", choiceText = null) {
       document.getElementById("restart-wrapper").style.display = "none";
       document.getElementById("typing-indicator").style.display = "block";
-
+      const choicesDiv = document.getElementById("choices");
+      choicesDiv.innerHTML = "";
       const node = await fetchNode(nodeId, choiceText, document.getElementById("story").textContent);
       currentNode = nodeId;
       document.getElementById("typing-indicator").style.display = "none";
       await typeStoryText(document.getElementById("story"), node.text);
-      const choicesDiv = document.getElementById("choices");
-      choicesDiv.innerHTML = "";
-
       node.choices.forEach((choice) => {
         const btn = document.createElement("button");
-        btn.textContent = choice.text;
+        btn.textContent = choice.text.toLowerCase();
         btn.onclick = () => render(choice.next, choice.text);
         choicesDiv.appendChild(btn);
       });
@@ -305,6 +304,7 @@
     }
 
     function resetStory() {
+      document.getElementById("header-title").textContent = "start your adventure";
       // Show the story selector again
       document.getElementById("story-selector").style.display = "block";
 
