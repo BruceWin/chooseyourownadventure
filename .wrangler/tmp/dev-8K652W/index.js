@@ -967,10 +967,12 @@ __name(handleChatRequest, "handleChatRequest");
 async function handleStoryRequest(request, env2) {
   try {
     let messages;
+    const randomSeed = Math.random();
+    console.log(`Handling story request with random seed: ${randomSeed}`);
     if (request.method === "GET") {
       messages = [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: "Begin the story. Generate the first node." }
+        { role: "user", content: `Begin story inspired by literature ordered by author name from 0 to 1, with seed ${randomSeed}. Generate the first node.` }
       ];
     } else {
       const { nodeId, choiceText, previousText } = await request.json();

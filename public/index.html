@@ -86,9 +86,38 @@
 
     .typing-indicator {
       display: none;
-      margin-bottom: 1rem;
-      font-style: italic;
-      color: var(--text-light);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.5rem;
+      color: var(--primary-color);
+      font-weight: bold;
+      text-align: center;
+      background: white;
+      padding: 1.5rem 2rem;
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 999;
+    }
+
+    @keyframes dots {
+      0% {
+        content: '';
+      }
+
+      33% {
+        content: '.';
+      }
+
+      66% {
+        content: '..';
+      }
+
+      100% {
+        content: '...';
+      }
     }
 
     .typing-indicator.visible {
@@ -122,7 +151,7 @@
     </div>
 
     <div class="typing-indicator" id="typing-indicator">
-      Loading story...
+      Loading story
     </div>
 
     <div class="message-input">
@@ -139,17 +168,10 @@
     let story = {};
     let currentNode = "start";
 
-    async function loadStory() {
-      try {
-        const wrapper = await fetch("/api/story").then(res => res.json());
-        console.log(wrapper);
-        story = wrapper; // already parsed!
-        render("start");
-      } catch (err) {
-        document.getElementById("story").textContent = "Failed to load story.";
-        console.error("Error fetching story:", err);
-      }
-    }
+    window.onload = () => {
+      render("start");
+    };
+
 
     async function render(nodeId = "start", choiceText = null) {
       document.getElementById("typing-indicator").style.display = "block";
@@ -188,9 +210,6 @@
 
       return result;
     }
-
-
-    loadStory();
   </script>
 </body>
 

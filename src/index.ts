@@ -3,7 +3,7 @@ import { Env, ChatMessage } from "./types";
 // Model ID for Workers AI (still used for /api/chat)
 const MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 
-// System prompt for LLM chat (if needed)
+
 const SYSTEM_PROMPT = `
 You are a utopian, pleasant, choose-your-own-adventure game engine.
 
@@ -80,10 +80,13 @@ async function handleStoryRequest(request: Request, env: Env): Promise<Response>
   try {
     let messages;
 
+    const randomSeed = Math.random();
+    console.log(`Handling story request with random seed: ${randomSeed}`);
+
     if (request.method === "GET") {
       messages = [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: "Begin the story. Generate the first node." },
+        { role: "user", content: `Begin story inspired by literature ordered by author name from 0 to 1, with seed ${randomSeed}. Generate the first node.` },
       ];
     } else {
       const { nodeId, choiceText, previousText } = await request.json();
