@@ -5,17 +5,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Choose Your Own Adventure</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary-color: #f6821f;
-      --primary-hover: #e67e22;
-      --light-bg: #f9fafb;
-      --border-color: #e5e7eb;
-      --text-color: #1f2937;
+      --primary-color: #d1d5db;
+      /* gray-300 for buttons */
+      --primary-hover: #e5e7eb;
+      /* gray-200 for hover */
+      --background: #ffffff;
+      /* white background */
+      --surface: #f3f4f6;
+      /* light gray box */
+      --border: #d1d5db;
+      /* subtle border */
+      --text: #111827;
+      /* near black */
       --text-light: #6b7280;
-      --user-msg-bg: #fff2e6;
-      --assistant-msg-bg: #f3f4f6;
+      /* gray-500 */
     }
+
 
     * {
       box-sizing: border-box;
@@ -24,11 +32,9 @@
     }
 
     body {
-      font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-        Cantarell, sans-serif;
-      line-height: 1.6;
-      color: var(--text-color);
+      font-family: 'Inter', sans-serif;
+      background-color: var(--background);
+      color: var(--text);
       max-width: 800px;
       margin: 0 auto;
       padding: 1rem;
@@ -38,20 +44,24 @@
       text-align: center;
       margin-bottom: 2rem;
       padding: 1rem 0;
-      border-bottom: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border);
     }
 
     h1 {
-      font-size: 1.5rem;
-      color: var(--primary-color);
+      font-size: 1.8rem;
+      color: #111827;
+      /* Tailwind's gray-900 — very dark */
+      font-weight: 700;
     }
+
 
     .chat-container {
       display: flex;
       flex-direction: column;
       height: calc(100vh - 200px);
       min-height: 400px;
-      border: 1px solid var(--border-color);
+      background-color: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 8px;
       overflow: hidden;
     }
@@ -59,30 +69,45 @@
     .chat-messages {
       flex: 1;
       overflow-y: auto;
-      padding: 1rem;
-      background-color: var(--light-bg);
+      padding: 1.5rem;
     }
 
     #story {
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
+      font-size: 1.125rem;
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+
+    #choices {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 1rem;
     }
 
     #choices button {
-      display: block;
-      margin: 0.5rem 0;
+      flex: 1 1 45%;
+      max-width: 240px;
       padding: 0.75rem 1.5rem;
-      background: var(--primary-color);
-      color: white;
-      border: none;
+      font-size: 1rem;
+      background-color: var(--primary-color);
+      color: var(--text);
+      border: 1px solid var(--border);
       border-radius: 8px;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background-color 0.2s ease, transform 0.1s ease;
     }
 
     #choices button:hover {
-      background: var(--primary-hover);
+      background-color: var(--primary-hover);
     }
+
+    #choices button:active {
+      transform: scale(0.98);
+    }
+
+
 
     .typing-indicator {
       display: none;
@@ -90,58 +115,34 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 1.5rem;
-      color: var(--primary-color);
-      font-weight: bold;
+      font-size: 1rem;
+      color: var(--text-light);
       text-align: center;
       background: white;
-      padding: 1.5rem 2rem;
-      border: 2px solid var(--border-color);
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 1rem 2rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
       z-index: 999;
-    }
-
-    @keyframes dots {
-      0% {
-        content: '';
-      }
-
-      33% {
-        content: '.';
-      }
-
-      66% {
-        content: '..';
-      }
-
-      100% {
-        content: '...';
-      }
     }
 
     .typing-indicator.visible {
       display: block;
     }
 
-    .message-input {
-      display: none;
-      /* Hide chat input for now */
-    }
-
     footer {
       margin-top: 1rem;
       text-align: center;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: var(--text-light);
     }
   </style>
+
 </head>
 
 <body>
   <header>
     <h1>Choose Your Own Adventure</h1>
-    <p>Powered by Cloudflare Workers</p>
+    <p>An interactive story</p>
   </header>
 
   <div class="chat-container">
@@ -153,15 +154,10 @@
     <div class="typing-indicator" id="typing-indicator">
       Loading story
     </div>
-
-    <div class="message-input">
-      <textarea id="user-input" placeholder="Type your message here..." rows="1"></textarea>
-      <button id="send-button">Send</button>
-    </div>
   </div>
 
   <footer>
-    <p>Cloudflare Workers Chat Template &copy; 2025</p>
+    <p>Every Choice Matters</p>
   </footer>
 
   <script>

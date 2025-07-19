@@ -16,8 +16,12 @@ Given a current scene and the player's choice (if any), return the next scene as
     { "text": "Option B", "next": "node_id_2" }
   ]
 }
+
+Always return exactly two choices. Each choice must lead to a different scene. Do not return more or fewer than two.
+
 Only return JSON. Do not include markdown, explanations, or commentary.
 `.trim();
+
 
 
 export default {
