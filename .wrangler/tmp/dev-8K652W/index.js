@@ -969,28 +969,18 @@ async function handleChatRequest(request, env2) {
 __name(handleChatRequest, "handleChatRequest");
 async function handleStoryRequest(request, env2) {
   try {
-    let messages;
-    const randomSeed = Math.random();
-    console.log(`Handling story request with random seed: ${randomSeed}`);
-    if (request.method === "GET") {
-      messages = [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: `Begin story inspired by literature ordered by author name from 0 to 1, with seed ${randomSeed}. Generate the first node.` }
-      ];
-    } else {
-      const { nodeId, choiceText, previousText } = await request.json();
-      messages = [
-        { role: "system", content: SYSTEM_PROMPT },
-        {
-          role: "user",
-          content: `Continue this story:
-
-${previousText}
-
-The player chose: "${choiceText}". What happens next?`
-        }
-      ];
-    }
+    const body = await request.json();
+    const userPrompt = body.prompt || null;
+    const messages = [
+      {
+        role: "system",
+        content: SYSTEM_PROMPT
+      },
+      {
+        role: "user",
+        content: userPrompt ? `Begin a choose-your-own-adventure story using this prompt: "${userPrompt}". Return only the first node.` : `Begin the story. Generate the first node.`
+      }
+    ];
     const aiResponse = await env2.AI.run(
       MODEL_ID,
       { messages, max_tokens: 1024 },
@@ -998,16 +988,16 @@ The player chose: "${choiceText}". What happens next?`
     );
     const rawText = await aiResponse.text();
     const parsed = JSON.parse(rawText);
-    return new Response(JSON.stringify(parsed.response), {
+    return new Response(JSON.stringify(parsed.response || parsed), {
       status: 200,
       headers: { "Content-Type": "application/json" }
     });
   } catch (err) {
     console.error("Error in handleStoryRequest:", err);
-    return new Response(
-      JSON.stringify({ error: "Failed to generate story node." }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Story generation failed" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 }
 __name(handleStoryRequest, "handleStoryRequest");

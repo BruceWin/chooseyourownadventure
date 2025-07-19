@@ -86,16 +86,13 @@
     }
 
     #choices button {
-      flex: 1 1 45%;
-      max-width: 240px;
-      padding: 0.75rem 1.5rem;
-      font-size: 1rem;
-      background-color: var(--primary-color);
+      padding: 0.5rem 1rem;
+      background-color: var(--surface);
       color: var(--text);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
-      transition: background-color 0.2s ease, transform 0.1s ease;
+      transition: background-color 0.2s ease;
     }
 
     #choices button:hover {
@@ -104,6 +101,20 @@
 
     #choices button:active {
       transform: scale(0.98);
+    }
+
+    .preset-btn {
+      padding: 0.5rem 1rem;
+      background-color: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .preset-btn:hover {
+      background-color: var(--primary-hover);
     }
 
 
@@ -134,6 +145,20 @@
       font-size: 0.8rem;
       color: var(--text-light);
     }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 2s ease-out forwards;
+    }
   </style>
 
 </head>
@@ -144,7 +169,53 @@
     <p>An interactive story</p>
   </header>
 
-  <div class="chat-container">
+  <div id="story-selector" style="margin-bottom: 2rem;">
+    <h2 style="font-size: 1.2rem;">Start Your Adventure</h2>
+    <p style="margin-bottom: 0.5rem;">Choose a theme or write your own:</p>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+      <button class="preset-btn"
+        data-prompt="In the candlelit halls of Elmsford Castle, whispers of betrayal coil around the aging King Aldric. Begin the story with a masked ball where the wrong heir is revealed.">🎭
+        Shakespearian</button>
+
+      <button class="preset-btn"
+        data-prompt="You work in a vast AI-run corporation where every action is monitored and rated. One morning, the system flags you as an 'anomaly' and tells you to leave immediately. Begin the story from this moment.">💼
+        Corporate Dystopia</button>
+
+      <button class="preset-btn"
+        data-prompt="In a society without money, war, or pollution, a festival is held to honor peace. But one citizen begins to question what lies beyond the shimmering dome. Start the story at the celebration.">🌸
+        Utopian</button>
+
+      <button class="preset-btn"
+        data-prompt="You step off the boat onto a sun-drenched island, surrounded by cameras and rivals. The first challenge? Choose who to share a sunset dinner with. Begin the story at the welcome ceremony.">❤️
+        Date Villa</button>
+
+      <button class="preset-btn"
+        data-prompt="The sun rises over Honeybell Farm as you wake to news that your prized cow has vanished. Begin the story as you hitch your boots and set out across the fields to find it.">🚜
+        Farm Life</button>
+
+      <button class="preset-btn"
+        data-prompt="You wake up in a containment pod, alarms blaring and glass cracked. You remember nothing except your name. Begin the story as the lab's lockdown fails and you step into the corridor.">🧪
+        Sci-Fi Lab Escape</button>
+
+      <button class="preset-btn"
+        data-prompt="The stars have aligned, and your village elder gives you a blade wrapped in prophecy. Begin the story the moment you cross the boundary stone into the dark woods.">👑
+        Fantasy Quest</button>
+
+      <button class="preset-btn"
+        data-prompt="You're in a quiet café when someone bangs on the window, screaming. Blood smears the glass. Begin the story in the first chaotic moments of the outbreak.">🦠
+        Zombie Outbreak</button>
+    </div>
+
+    <textarea id="custom-prompt" placeholder="Or write your own scene prompt..." rows="2"
+      style="width: 100%; padding: 0.5rem; margin-bottom: 1rem;"></textarea>
+
+    <button onclick="startStory()" class="preset-btn">Begin Adventure</button>
+  </div>
+
+
+
+  <div class="chat-container" id="chat-container" style="display: none;">
     <div id="chat-messages" class="chat-messages">
       <div id="story"></div>
       <div id="choices"></div>
@@ -163,9 +234,31 @@
     let story = {};
     let currentNode = "start";
 
-    window.onload = () => {
-      render("start");
-    };
+    let initialPrompt = "";
+
+    async function startStory() {
+      const select = document.getElementById("preset-select");
+      const textarea = document.getElementById("custom-prompt");
+      const prompt = textarea.value.trim() || select.value;
+
+      if (!prompt) {
+        alert("Please select or enter a story prompt.");
+        return;
+      }
+
+      initialPrompt = prompt; // Save for API use
+
+      // Hide selector, show loading
+      document.getElementById("story-selector").style.display = "none";
+      document.getElementById("typing-indicator").style.display = "block";
+      const chatContainer = document.getElementById("chat-container");
+      chatContainer.style.display = "flex";
+      chatContainer.classList.add("fade-in");
+
+
+      await render("start"); // Kick off story
+    }
+
 
 
     async function render(nodeId = "start", choiceText = null) {
@@ -197,6 +290,10 @@
 
     async function fetchNode(nodeId = "start", choiceText = null, previousText = "") {
       const body = { nodeId, choiceText, previousText };
+
+      if (nodeId === "start" && initialPrompt) {
+        body.prompt = initialPrompt; // pass it on first load only
+      }
       const result = await fetch("/api/story", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -205,6 +302,16 @@
 
       return result;
     }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".preset-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const prompt = btn.getAttribute("data-prompt");
+          document.getElementById("custom-prompt").value = prompt;
+        });
+      });
+    });
+
   </script>
 </body>
 
