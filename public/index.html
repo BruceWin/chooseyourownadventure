@@ -234,7 +234,7 @@
   </footer>
 
   <script>
-    let story = {};
+    let conversation = [];
     let currentNode = "start";
 
     let initialPrompt = "";
@@ -289,11 +289,14 @@
     }
 
     async function fetchNode(nodeId = "start", choiceText = null, previousText = "") {
-      const body = { nodeId, choiceText, previousText };
+      const userMessage = choiceText ? `Player chose: "${choiceText}"` : `Begin the story: "${initialPrompt}"`;
+      conversation.push({ role: "user", content: userMessage });
 
-      if (nodeId === "start" && initialPrompt) {
-        body.prompt = initialPrompt; // pass it on first load only
-      }
+      const body = {
+        nodeId,
+        messages: conversation,
+      };
+      console.log(body);
       const result = await fetch("/api/story", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -318,7 +321,7 @@
       document.querySelectorAll(".preset-btn").forEach(btn => btn.classList.remove("selected"));
     }
 
-    async function typeStoryText(element, text, delay = 20) {
+    async function typeStoryText(element, text, delay = 10) {
       element.textContent = "";
       for (let i = 0; i < text.length; i++) {
         element.textContent += text.charAt(i);

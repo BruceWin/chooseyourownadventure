@@ -5,7 +5,7 @@ const MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 
 
 const SYSTEM_PROMPT = `
-You are a utopian, pleasant, choose-your-own-adventure game engine.
+You are a choose-your-own-adventure game engine.
 
 Given a current scene and the player's choice (if any), return the next scene as a JSON object:
 
@@ -55,52 +55,23 @@ export default {
   }
 } satisfies ExportedHandler<Env>;
 
-async function handleChatRequest(request: Request, env: Env): Promise<Response> {
-  console.log("Handling chat request...");
-  try {
-    const { messages = [] } = (await request.json()) as { messages: ChatMessage[] };
-
-    if (!messages.some((msg) => msg.role === "system")) {
-      messages.unshift({ role: "system", content: SYSTEM_PROMPT });
-    }
-
-    const response = await env.AI.run(
-      MODEL_ID,
-      { messages, max_tokens: 1024 },
-      { returnRawResponse: true }
-    );
-
-    return response;
-  } catch (error) {
-    console.error("Error processing chat request:", error);
-    return new Response(JSON.stringify({ error: "Failed to process request" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
-  }
-}
-
 async function handleStoryRequest(request: Request, env: Env): Promise<Response> {
-  try {
+  try {    
     const body = await request.json();
-    const userPrompt = body.prompt || null;
+    console.log(body);
+    const messages = body.messages;
 
-    const messages = [
+   const fullMessages = [
       {
         role: "system",
         content: SYSTEM_PROMPT,
       },
-      {
-        role: "user",
-        content: userPrompt
-          ? `Begin a choose-your-own-adventure story using this prompt: "${userPrompt}". Return only the first node.`
-          : `Begin the story. Generate the first node.`,
-      },
+      ...messages // includes all past user/assistant messages
     ];
 
     const aiResponse = await env.AI.run(
       MODEL_ID,
-      { messages, max_tokens: 1024 },
+      { messages: fullMessages, max_tokens: 1024 },
       { returnRawResponse: true }
     );
 

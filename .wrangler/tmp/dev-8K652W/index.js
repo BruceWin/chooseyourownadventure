@@ -908,7 +908,7 @@ globalThis.process = process_default;
 // src/index.ts
 var MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 var SYSTEM_PROMPT = `
-You are a utopian, pleasant, choose-your-own-adventure game engine.
+You are a choose-your-own-adventure game engine.
 
 Given a current scene and the player's choice (if any), return the next scene as a JSON object:
 
@@ -945,45 +945,22 @@ var src_default = {
     return new Response("Not found", { status: 404 });
   }
 };
-async function handleChatRequest(request, env2) {
-  console.log("Handling chat request...");
-  try {
-    const { messages = [] } = await request.json();
-    if (!messages.some((msg) => msg.role === "system")) {
-      messages.unshift({ role: "system", content: SYSTEM_PROMPT });
-    }
-    const response = await env2.AI.run(
-      MODEL_ID,
-      { messages, max_tokens: 1024 },
-      { returnRawResponse: true }
-    );
-    return response;
-  } catch (error3) {
-    console.error("Error processing chat request:", error3);
-    return new Response(JSON.stringify({ error: "Failed to process request" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
-  }
-}
-__name(handleChatRequest, "handleChatRequest");
 async function handleStoryRequest(request, env2) {
   try {
     const body = await request.json();
-    const userPrompt = body.prompt || null;
-    const messages = [
+    console.log(body);
+    const messages = body.messages;
+    const fullMessages = [
       {
         role: "system",
         content: SYSTEM_PROMPT
       },
-      {
-        role: "user",
-        content: userPrompt ? `Begin a choose-your-own-adventure story using this prompt: "${userPrompt}". Return only the first node.` : `Begin the story. Generate the first node.`
-      }
+      ...messages
+      // includes all past user/assistant messages
     ];
     const aiResponse = await env2.AI.run(
       MODEL_ID,
-      { messages, max_tokens: 1024 },
+      { messages: fullMessages, max_tokens: 1024 },
       { returnRawResponse: true }
     );
     const rawText = await aiResponse.text();
