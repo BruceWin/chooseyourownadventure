@@ -906,11 +906,28 @@ var process_default = _process;
 globalThis.process = process_default;
 
 // src/index.ts
-var MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
-var SYSTEM_PROMPT = `
+var src_default = {
+  async fetch(request, env2, ctx) {
+    const url = new URL(request.url);
+    console.log("Request URL:", url.href);
+    if (url.pathname === "/" || !url.pathname.startsWith("/api/")) {
+      return env2.ASSETS.fetch(request);
+    }
+    if (url.pathname === "/api/story" && request.method === "POST") {
+      return handleStoryRequest(request, env2);
+    }
+    return new Response("Not found", { status: 404 });
+  }
+};
+async function handleStoryRequest(request, env2) {
+  try {
+    const body = await request.json();
+    const { prompt, history = [] } = body;
+    console.log("Incoming body:", body);
+    const SYSTEM_PROMPT = `
 You are a choose-your-own-adventure game engine.
 
-Given a current scene and the player's choice (if any), return the next scene as a JSON object:
+Return the next scene as a raw JSON object. Do NOT use markdown or code blocks.
 
 {
   "text": "Scene text here",
@@ -920,52 +937,60 @@ Given a current scene and the player's choice (if any), return the next scene as
   ]
 }
 
-Always return exactly two choices. Each choice must lead to a different scene. Do not return more or fewer than two.
-
 Only return JSON. Do not include markdown, explanations, or commentary.
 `.trim();
-var src_default = {
-  async fetch(request, env2, ctx) {
-    const url = new URL(request.url);
-    if (url.pathname === "/" || !url.pathname.startsWith("/api/")) {
-      return env2.ASSETS.fetch(request);
-    }
-    if (url.pathname === "/api/story" && request.method === "GET") {
-      return await handleStoryRequest(request, env2);
-    }
-    if (url.pathname === "/api/story" && request.method === "POST") {
-      return handleStoryRequest(request, env2);
-    }
-    if (url.pathname === "/api/chat") {
-      if (request.method === "POST") {
-        return handleChatRequest(request, env2);
-      }
-      return new Response("Method not allowed", { status: 405 });
-    }
-    return new Response("Not found", { status: 404 });
-  }
-};
-async function handleStoryRequest(request, env2) {
-  try {
-    const body = await request.json();
-    console.log(body);
-    const messages = body.messages;
-    const fullMessages = [
+    const messages = [
       {
         role: "system",
         content: SYSTEM_PROMPT
       },
-      ...messages
-      // includes all past user/assistant messages
+      {
+        role: "user",
+        content: `
+HISTORY:
+${history.map((entry, i) => `Scene ${i + 1}:
+${entry.scene}
+Player chose: "${entry.content}"
+`).join("\n")}
+
+Continue the story from the last scene. Return ONLY a JSON object like this:
+{
+  "text": "Scene text here",
+  "choices": [
+    { "text": "Option A", "next": "node_id_1" },
+    { "text": "Option B", "next": "node_id_2" }
+  ]
+}
+Do NOT include markdown, prose, commentary, or code blocks.
+`.trim()
+      }
     ];
-    const aiResponse = await env2.AI.run(
-      MODEL_ID,
-      { messages: fullMessages, max_tokens: 1024 },
-      { returnRawResponse: true }
-    );
-    const rawText = await aiResponse.text();
-    const parsed = JSON.parse(rawText);
-    return new Response(JSON.stringify(parsed.response || parsed), {
+    console.log(messages);
+    const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${env2.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages,
+        temperature: 0.85,
+        max_tokens: 1024
+      })
+    });
+    const data = await aiResponse.json();
+    if (!aiResponse.ok) {
+      console.error("OpenAI API error:", data);
+      return new Response(JSON.stringify({ error: "OpenAI API error" }), {
+        status: aiResponse.status,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+    const content = data.choices?.[0]?.message?.content;
+    console.log("Raw content from OpenAI:", content);
+    const parsed = JSON.parse(content);
+    return new Response(JSON.stringify(parsed), {
       status: 200,
       headers: { "Content-Type": "application/json" }
     });
@@ -1020,7 +1045,7 @@ var jsonError = /* @__PURE__ */ __name(async (request, env2, _ctx, middlewareCtx
 }, "jsonError");
 var middleware_miniflare3_json_error_default = jsonError;
 
-// .wrangler/tmp/bundle-eoMiGA/middleware-insertion-facade.js
+// .wrangler/tmp/bundle-NmDXNi/middleware-insertion-facade.js
 var __INTERNAL_WRANGLER_MIDDLEWARE__ = [
   middleware_ensure_req_body_drained_default,
   middleware_miniflare3_json_error_default
@@ -1052,7 +1077,7 @@ function __facade_invoke__(request, env2, ctx, dispatch, finalMiddleware) {
 }
 __name(__facade_invoke__, "__facade_invoke__");
 
-// .wrangler/tmp/bundle-eoMiGA/middleware-loader.entry.ts
+// .wrangler/tmp/bundle-NmDXNi/middleware-loader.entry.ts
 var __Facade_ScheduledController__ = class ___Facade_ScheduledController__ {
   constructor(scheduledTime, cron, noRetry) {
     this.scheduledTime = scheduledTime;

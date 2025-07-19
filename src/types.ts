@@ -7,6 +7,7 @@ export interface Env {
    * Binding for the Workers AI API.
    */
   AI: Ai;
+  OPENAI_API_KEY: string;
 
   /**
    * Binding for static assets.

@@ -1,2 +1,4 @@
 node_modules/.cache/wrangler/wrangler-account.json
 node_modules/.mf/cf.json
+.env
+.dev.vars

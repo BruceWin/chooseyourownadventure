@@ -245,11 +245,6 @@
       const textarea = document.getElementById("custom-prompt");
       const prompt = textarea.value.trim() || select.value;
 
-      if (!prompt) {
-        alert("Please select or enter a story prompt.");
-        return;
-      }
-
       initialPrompt = prompt; // Save for API use
 
       // Hide selector, show loading
@@ -258,18 +253,17 @@
       const chatContainer = document.getElementById("chat-container");
       chatContainer.style.display = "flex";
       chatContainer.classList.add("fade-in");
-      await render("start"); // Kick off story
+      await render("start", prompt); // Kick off story
     }
 
-
-
-    async function render(nodeId = "start", choiceText = null) {
+    async function render(nodeId, choiceText = null) {
       document.getElementById("restart-wrapper").style.display = "none";
       document.getElementById("typing-indicator").style.display = "block";
       const choicesDiv = document.getElementById("choices");
       choicesDiv.innerHTML = "";
-      const node = await fetchNode(nodeId, choiceText, document.getElementById("story").textContent);
       currentNode = nodeId;
+
+      const node = await fetchNode(nodeId, choiceText, document.getElementById("story").textContent);
       document.getElementById("typing-indicator").style.display = "none";
       await typeStoryText(document.getElementById("story"), node.text);
       node.choices.forEach((choice) => {
@@ -286,15 +280,25 @@
         choicesDiv.appendChild(restartBtn);
       }
       document.getElementById("restart-wrapper").style.display = "block";
+
     }
 
     async function fetchNode(nodeId = "start", choiceText = null, previousText = "") {
+      console.log("Fetching node:", nodeId, "with choice:", choiceText);
+      console.log("Fetching node:", nodeId, "with previous:", previousText);
       const userMessage = choiceText ? `Player chose: "${choiceText}"` : `Begin the story: "${initialPrompt}"`;
-      conversation.push({ role: "user", content: userMessage });
+      if (previousText)
+        conversation.push({
+          content: previousText
+        });
+      if (choiceText)
+        conversation.push({
+          content: choiceText
+        });
 
       const body = {
         nodeId,
-        messages: conversation,
+        history: conversation,
       };
       console.log(body);
       const result = await fetch("/api/story", {
@@ -321,7 +325,7 @@
       document.querySelectorAll(".preset-btn").forEach(btn => btn.classList.remove("selected"));
     }
 
-    async function typeStoryText(element, text, delay = 10) {
+    async function typeStoryText(element, text, delay = 15) {
       element.textContent = "";
       for (let i = 0; i < text.length; i++) {
         element.textContent += text.charAt(i);
