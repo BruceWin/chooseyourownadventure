@@ -284,8 +284,6 @@
     }
 
     async function fetchNode(nodeId = "start", choiceText = null, previousText = "") {
-      console.log("Fetching node:", nodeId, "with choice:", choiceText);
-      console.log("Fetching node:", nodeId, "with previous:", previousText);
       const userMessage = choiceText ? `Player chose: "${choiceText}"` : `Begin the story: "${initialPrompt}"`;
       if (previousText)
         conversation.push({
@@ -300,7 +298,6 @@
         nodeId,
         history: conversation,
       };
-      console.log(body);
       const result = await fetch("/api/story", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
