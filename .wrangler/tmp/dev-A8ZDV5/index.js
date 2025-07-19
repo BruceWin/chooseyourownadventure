@@ -973,7 +973,9 @@ Do NOT include markdown, prose, commentary, or code blocks.
         "Authorization": `Bearer ${env2.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo",
+        //model: "gpt-3.5-turbo",
+        //model: "gpt-4.1-mini",
+        model: "gpt-4.1-mini",
         messages,
         temperature: 0.85,
         max_tokens: 1024
