@@ -1,177 +1,183 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LLM Chat App</title>
-    <style>
-      :root {
-        --primary-color: #f6821f;
-        --primary-hover: #e67e22;
-        --light-bg: #f9fafb;
-        --border-color: #e5e7eb;
-        --text-color: #1f2937;
-        --text-light: #6b7280;
-        --user-msg-bg: #fff2e6;
-        --assistant-msg-bg: #f3f4f6;
-      }
 
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Choose Your Own Adventure</title>
+  <style>
+    :root {
+      --primary-color: #f6821f;
+      --primary-hover: #e67e22;
+      --light-bg: #f9fafb;
+      --border-color: #e5e7eb;
+      --text-color: #1f2937;
+      --text-light: #6b7280;
+      --user-msg-bg: #fff2e6;
+      --assistant-msg-bg: #f3f4f6;
+    }
 
-      body {
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
-          Cantarell, sans-serif;
-        line-height: 1.6;
-        color: var(--text-color);
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 1rem;
-      }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-      header {
-        text-align: center;
-        margin-bottom: 2rem;
-        padding: 1rem 0;
-        border-bottom: 1px solid var(--border-color);
-      }
+    body {
+      font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+        Cantarell, sans-serif;
+      line-height: 1.6;
+      color: var(--text-color);
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
 
-      h1 {
-        font-size: 1.5rem;
-        color: var(--primary-color);
-      }
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border-color);
+    }
 
-      .chat-container {
-        display: flex;
-        flex-direction: column;
-        height: calc(100vh - 200px);
-        min-height: 400px;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        overflow: hidden;
-      }
+    h1 {
+      font-size: 1.5rem;
+      color: var(--primary-color);
+    }
 
-      .chat-messages {
-        flex: 1;
-        overflow-y: auto;
-        padding: 1rem;
-        background-color: var(--light-bg);
-      }
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 200px);
+      min-height: 400px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+    }
 
-      .message {
-        margin-bottom: 1rem;
-        padding: 0.75rem;
-        border-radius: 8px;
-        max-width: 80%;
-      }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      background-color: var(--light-bg);
+    }
 
-      .user-message {
-        background-color: var(--user-msg-bg);
-        align-self: flex-end;
-        margin-left: auto;
-      }
+    #story {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
 
-      .assistant-message {
-        background-color: var(--assistant-msg-bg);
-        align-self: flex-start;
-      }
+    #choices button {
+      display: block;
+      margin: 0.5rem 0;
+      padding: 0.75rem 1.5rem;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
 
-      .message-input {
-        display: flex;
-        padding: 0.75rem;
-        border-top: 1px solid var(--border-color);
-        background-color: white;
-      }
+    #choices button:hover {
+      background: var(--primary-hover);
+    }
 
-      #user-input {
-        flex: 1;
-        padding: 0.75rem;
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        font-family: inherit;
-        resize: none;
-        min-height: 44px;
-      }
+    .typing-indicator {
+      display: none;
+      margin-bottom: 1rem;
+      font-style: italic;
+      color: var(--text-light);
+    }
 
-      #send-button {
-        margin-left: 0.5rem;
-        padding: 0 1rem;
-        background-color: var(--primary-color);
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-      }
+    .typing-indicator.visible {
+      display: block;
+    }
 
-      #send-button:hover {
-        background-color: var(--primary-hover);
-      }
+    .message-input {
+      display: none;
+      /* Hide chat input for now */
+    }
 
-      #send-button:disabled {
-        background-color: var(--text-light);
-        cursor: not-allowed;
-      }
+    footer {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-light);
+    }
+  </style>
+</head>
 
-      .typing-indicator {
-        display: none;
-        margin-bottom: 1rem;
-        font-style: italic;
-        color: var(--text-light);
-      }
+<body>
+  <header>
+    <h1>Choose Your Own Adventure</h1>
+    <p>Powered by Cloudflare Workers</p>
+  </header>
 
-      .typing-indicator.visible {
-        display: block;
-      }
-
-      footer {
-        margin-top: 1rem;
-        text-align: center;
-        font-size: 0.85rem;
-        color: var(--text-light);
-      }
-    </style>
-  </head>
-  <body>
-    <header>
-      <h1>Choose Your Own Adventure</h1>
-      <p>Powered by Cloudflare Workers AI</p>
-    </header>
-
-    <div class="chat-container">
-      <div id="chat-messages" class="chat-messages">
-        <div class="message assistant-message">
-          <p>
-            Hello! I'm an LLM chat app powered by Cloudflare Workers AI. How can
-            I help you today?
-          </p>
-        </div>
-      </div>
-
-      <div class="typing-indicator" id="typing-indicator">
-        AI is thinking...
-      </div>
-
-      <div class="message-input">
-        <textarea
-          id="user-input"
-          placeholder="Type your message here..."
-          rows="1"
-          autofocus
-        ></textarea>
-        <button id="send-button">Send</button>
-      </div>
+  <div class="chat-container">
+    <div id="chat-messages" class="chat-messages">
+      <div id="story"></div>
+      <div id="choices"></div>
     </div>
 
-    <footer>
-      <p>Cloudflare Workers AI Chat Template &copy; 2025</p>
-    </footer>
+    <div class="typing-indicator" id="typing-indicator">
+      Loading story...
+    </div>
 
-    <!-- Chat app script -->
-    <script src="chat.js"></script>
-  </body>
+    <div class="message-input">
+      <textarea id="user-input" placeholder="Type your message here..." rows="1"></textarea>
+      <button id="send-button">Send</button>
+    </div>
+  </div>
+
+  <footer>
+    <p>Cloudflare Workers Chat Template &copy; 2025</p>
+  </footer>
+
+  <script>
+    let story = {};
+    let currentNode = "start";
+
+    async function loadStory() {
+      try {
+        const wrapper = await fetch("/api/story").then(res => res.json());
+        console.log(wrapper);
+        story = wrapper.response; // already parsed!
+        render("start");
+      } catch (err) {
+        document.getElementById("story").textContent = "Failed to load story.";
+        console.error("Error fetching story:", err);
+      }
+    }
+
+    function render(nodeId) {
+      currentNode = nodeId;
+      console.log("Rendering node:", currentNode);
+      const node = story[nodeId];
+      document.getElementById("typing-indicator").style.display = "none";
+      document.getElementById("story").textContent = node.text;
+
+      const choicesDiv = document.getElementById("choices");
+      choicesDiv.innerHTML = "";
+
+      node.choices.forEach((choice) => {
+        const btn = document.createElement("button");
+        btn.textContent = choice.text;
+        btn.onclick = () => render(choice.next);
+        choicesDiv.appendChild(btn);
+      });
+
+      if (node.choices.length === 0) {
+        const restartBtn = document.createElement("button");
+        restartBtn.textContent = "Restart";
+        restartBtn.onclick = () => render("start");
+        choicesDiv.appendChild(restartBtn);
+      }
+    }
+
+    loadStory();
+  </script>
+</body>
+
 </html>

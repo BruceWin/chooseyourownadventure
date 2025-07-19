@@ -1,99 +1,114 @@
-/**
- * LLM Chat Application Template
- *
- * A simple chat application using Cloudflare Workers AI.
- * This template demonstrates how to implement an LLM-powered chat interface with
- * streaming responses using Server-Sent Events (SSE).
- *
- * @license MIT
- */
 import { Env, ChatMessage } from "./types";
 
-// Model ID for Workers AI model
-// https://developers.cloudflare.com/workers-ai/models/
+// Model ID for Workers AI (still used for /api/chat)
 const MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 
-// Default system prompt
-const SYSTEM_PROMPT =
-  "You are a helpful, friendly assistant. Provide concise and accurate responses.";
+// System prompt for LLM chat (if needed)
+const SYSTEM_PROMPT = `
+You are a choose-your-own-adventure game engine.
+
+Given a current scene and the player's choice (if any), return the next scene as a JSON object:
+
+{
+  "text": "Scene text here",
+  "choices": [
+    { "text": "Option A", "next": "node_id_1" },
+    { "text": "Option B", "next": "node_id_2" }
+  ]
+}
+
+Only return JSON. Do not include markdown, explanations, or commentary.
+`.trim();
+
 
 export default {
-  /**
-   * Main request handler for the Worker
-   */
-  async fetch(
-    request: Request,
-    env: Env,
-    ctx: ExecutionContext,
-  ): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    // Handle static assets (frontend)
+    // 1. Serve frontend assets for the root path or anything not under /api
     if (url.pathname === "/" || !url.pathname.startsWith("/api/")) {
       return env.ASSETS.fetch(request);
     }
 
-    // API Routes
+    if (url.pathname === "/api/story" && request.method === "GET") {
+      return await handleStoryRequest(request, env);
+    }
+
+
+    // 3. Existing chat route (optional)
     if (url.pathname === "/api/chat") {
-      // Handle POST requests for chat
       if (request.method === "POST") {
         return handleChatRequest(request, env);
       }
-
-      // Method not allowed for other request types
       return new Response("Method not allowed", { status: 405 });
     }
 
-    // Handle 404 for unmatched routes
+    // 4. Default 404 for unmatched routes
     return new Response("Not found", { status: 404 });
-  },
+  }
 } satisfies ExportedHandler<Env>;
 
-/**
- * Handles chat API requests
- */
-async function handleChatRequest(
-  request: Request,
-  env: Env,
-): Promise<Response> {
+async function handleChatRequest(request: Request, env: Env): Promise<Response> {
+  console.log("Handling chat request...");
   try {
-    // Parse JSON request body
-    const { messages = [] } = (await request.json()) as {
-      messages: ChatMessage[];
-    };
+    const { messages = [] } = (await request.json()) as { messages: ChatMessage[] };
 
-    // Add system prompt if not present
     if (!messages.some((msg) => msg.role === "system")) {
       messages.unshift({ role: "system", content: SYSTEM_PROMPT });
     }
 
     const response = await env.AI.run(
       MODEL_ID,
-      {
-        messages,
-        max_tokens: 1024,
-      },
-      {
-        returnRawResponse: true,
-        // Uncomment to use AI Gateway
-        // gateway: {
-        //   id: "YOUR_GATEWAY_ID", // Replace with your AI Gateway ID
-        //   skipCache: false,      // Set to true to bypass cache
-        //   cacheTtl: 3600,        // Cache time-to-live in seconds
-        // },
-      },
+      { messages, max_tokens: 1024 },
+      { returnRawResponse: true }
     );
 
-    // Return streaming response
     return response;
   } catch (error) {
     console.error("Error processing chat request:", error);
+    return new Response(JSON.stringify({ error: "Failed to process request" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+}
+
+async function handleStoryRequest(request: Request, env: Env): Promise<Response> {
+  console.log("Handling story generation request...");
+
+  const messages: ChatMessage[] = [
+    {
+      role: "system",
+      content:
+        "You are a text adventure game engine. Generate a short choose-your-own-adventure story tree in JSON format. Structure it like this: { nodeId: { text: string, choices: [ { text: string, next: nodeId }, ... ] }, ... }. Respond with ONLY the JSON — no commentary, no markdown, no explanation."
+    },
+    {
+      role: "user",
+      content:
+        "Start the story with the player waking up in a mysterious forest. Include 5-6 total nodes, with at least two endings."
+    }
+  ];
+
+  try {
+    const aiResponse = await env.AI.run(
+      MODEL_ID,
+      { messages, max_tokens: 1024 },
+      { returnRawResponse: true }
+    );
+
+    //var responseText = await response.text();
+    const rawText = await aiResponse.text(); // stringified object
+    const response = JSON.parse(rawText); // has .response   
+    console.log("Handling story generation request done");
+    return new Response(JSON.stringify(response), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    });
+  } catch (error) {
+    console.error("Error generating story:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to process request" }),
-      {
-        status: 500,
-        headers: { "content-type": "application/json" },
-      },
+      JSON.stringify({ error: "Failed to generate story" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }
