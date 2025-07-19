@@ -908,7 +908,7 @@ globalThis.process = process_default;
 // src/index.ts
 var MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 var SYSTEM_PROMPT = `
-You are a choose-your-own-adventure game engine.
+You are a utopian, pleasant, choose-your-own-adventure game engine.
 
 Given a current scene and the player's choice (if any), return the next scene as a JSON object:
 
@@ -919,7 +919,6 @@ Given a current scene and the player's choice (if any), return the next scene as
     { "text": "Option B", "next": "node_id_2" }
   ]
 }
-
 Only return JSON. Do not include markdown, explanations, or commentary.
 `.trim();
 var src_default = {
@@ -930,6 +929,9 @@ var src_default = {
     }
     if (url.pathname === "/api/story" && request.method === "GET") {
       return await handleStoryRequest(request, env2);
+    }
+    if (url.pathname === "/api/story" && request.method === "POST") {
+      return handleStoryRequest(request, env2);
     }
     if (url.pathname === "/api/chat") {
       if (request.method === "POST") {
@@ -963,34 +965,42 @@ async function handleChatRequest(request, env2) {
 }
 __name(handleChatRequest, "handleChatRequest");
 async function handleStoryRequest(request, env2) {
-  console.log("Handling story generation request...");
-  const messages = [
-    {
-      role: "system",
-      content: "You are a text adventure game engine. Generate a short choose-your-own-adventure story tree in JSON format. Structure it like this: { nodeId: { text: string, choices: [ { text: string, next: nodeId }, ... ] }, ... }. Respond with ONLY the JSON \u2014 no commentary, no markdown, no explanation."
-    },
-    {
-      role: "user",
-      content: "Start the story with the player waking up in a mysterious forest. Include 5-6 total nodes, with at least two endings."
-    }
-  ];
   try {
+    let messages;
+    if (request.method === "GET") {
+      messages = [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: "Begin the story. Generate the first node." }
+      ];
+    } else {
+      const { nodeId, choiceText, previousText } = await request.json();
+      messages = [
+        { role: "system", content: SYSTEM_PROMPT },
+        {
+          role: "user",
+          content: `Continue this story:
+
+${previousText}
+
+The player chose: "${choiceText}". What happens next?`
+        }
+      ];
+    }
     const aiResponse = await env2.AI.run(
       MODEL_ID,
       { messages, max_tokens: 1024 },
       { returnRawResponse: true }
     );
     const rawText = await aiResponse.text();
-    const response = JSON.parse(rawText);
-    console.log("Handling story generation request done");
-    return new Response(JSON.stringify(response), {
+    const parsed = JSON.parse(rawText);
+    return new Response(JSON.stringify(parsed.response), {
       status: 200,
       headers: { "Content-Type": "application/json" }
     });
-  } catch (error3) {
-    console.error("Error generating story:", error3);
+  } catch (err) {
+    console.error("Error in handleStoryRequest:", err);
     return new Response(
-      JSON.stringify({ error: "Failed to generate story" }),
+      JSON.stringify({ error: "Failed to generate story node." }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }

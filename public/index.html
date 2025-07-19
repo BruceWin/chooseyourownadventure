@@ -143,7 +143,7 @@
       try {
         const wrapper = await fetch("/api/story").then(res => res.json());
         console.log(wrapper);
-        story = wrapper.response; // already parsed!
+        story = wrapper; // already parsed!
         render("start");
       } catch (err) {
         document.getElementById("story").textContent = "Failed to load story.";
@@ -151,12 +151,14 @@
       }
     }
 
-    function render(nodeId) {
+    async function render(nodeId = "start", choiceText = null) {
+      document.getElementById("typing-indicator").style.display = "block";
+
+      const node = await fetchNode(nodeId, choiceText, document.getElementById("story").textContent);
       currentNode = nodeId;
-      console.log("Rendering node:", currentNode);
-      const node = story[nodeId];
-      document.getElementById("typing-indicator").style.display = "none";
+
       document.getElementById("story").textContent = node.text;
+      document.getElementById("typing-indicator").style.display = "none";
 
       const choicesDiv = document.getElementById("choices");
       choicesDiv.innerHTML = "";
@@ -164,7 +166,7 @@
       node.choices.forEach((choice) => {
         const btn = document.createElement("button");
         btn.textContent = choice.text;
-        btn.onclick = () => render(choice.next);
+        btn.onclick = () => render(choice.next, choice.text);
         choicesDiv.appendChild(btn);
       });
 
@@ -175,6 +177,18 @@
         choicesDiv.appendChild(restartBtn);
       }
     }
+
+    async function fetchNode(nodeId = "start", choiceText = null, previousText = "") {
+      const body = { nodeId, choiceText, previousText };
+      const result = await fetch("/api/story", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }).then(res => res.json());
+
+      return result;
+    }
+
 
     loadStory();
   </script>
