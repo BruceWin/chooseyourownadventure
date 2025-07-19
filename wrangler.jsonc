@@ -25,5 +25,10 @@
     "dev": {
       "vars": {}
     }
-  }
+  },
+    "routes": [
+    "storyloop.co.uk/*",
+    "*.storyloop.co.uk/*",
+    "story.storyloop.co.uk/*"
+  ]
 }
