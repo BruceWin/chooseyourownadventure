@@ -10,6 +10,7 @@
     "nodejs_compat",
     "global_fetch_strictly_public"
   ],
+  "workers_dev": false,
   "assets": {
     "binding": "ASSETS",
     "directory": "./public"
@@ -29,6 +30,6 @@
     "routes": [
     "storyloop.co.uk/*",
     "*.storyloop.co.uk/*",
-    "story.storyloop.co.uk/*"
+    "fable.storyloop.co.uk/*"
   ]
 }
