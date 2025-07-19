@@ -122,7 +122,7 @@
     .typing-indicator {
       display: none;
       position: absolute;
-      top: 50%;
+      top: 30%;
       left: 50%;
       transform: translate(-50%, -50%);
       font-size: 1rem;
@@ -220,14 +220,15 @@
       <div id="story"></div>
       <div id="choices"></div>
     </div>
-
     <div class="typing-indicator" id="typing-indicator">
       Loading story
     </div>
   </div>
 
   <footer>
-    <p>***Every Choice Matters***</p>
+    <button onclick="resetStory()" class="preset-btn" style="margin-top: 1rem;">
+      Start New Story
+    </button>
   </footer>
 
   <script>
@@ -266,10 +267,8 @@
 
       const node = await fetchNode(nodeId, choiceText, document.getElementById("story").textContent);
       currentNode = nodeId;
-
-      document.getElementById("story").textContent = node.text;
       document.getElementById("typing-indicator").style.display = "none";
-
+      await typeStoryText(document.getElementById("story"), node.text);
       const choicesDiv = document.getElementById("choices");
       choicesDiv.innerHTML = "";
 
@@ -302,6 +301,30 @@
 
       return result;
     }
+
+    function resetStory() {
+      // Show the story selector again
+      document.getElementById("story-selector").style.display = "block";
+
+      // Hide the story UI
+      document.querySelector(".chat-container").style.display = "none";
+
+      // Reset state
+      document.getElementById("story").textContent = "";
+      document.getElementById("choices").innerHTML = "";
+      document.getElementById("custom-prompt").value = "";
+      document.querySelectorAll(".preset-btn").forEach(btn => btn.classList.remove("selected"));
+    }
+
+    async function typeStoryText(element, text, delay = 20) {
+      element.textContent = "";
+      for (let i = 0; i < text.length; i++) {
+        element.textContent += text.charAt(i);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+
+
 
     document.addEventListener("DOMContentLoaded", () => {
       document.querySelectorAll(".preset-btn").forEach(btn => {
